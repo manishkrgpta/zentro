@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom visual utilities */
+@layer utilities {
+  /* Smooth scroll support */
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(59, 130, 246, 0.2) #050816;
+  }
+
+  /* Fade-in animations for dynamic view routing */
+  .animate-fade-in {
+    animation: fadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Custom glow-shadow parameters */
+  .shadow-glow-blue {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.15);
+  }
+  .shadow-glow-cyan {
+    box-shadow: 0 0 25px rgba(34, 211, 238, 0.2);
+  }
+
+  /* --- IMMERSIVE UI STYLING CLASSES --- */
+  .glow-top {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .glow-corner {
+    position: absolute;
+    bottom: -100px;
+    right: -100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .immersive-title {
+    background: linear-gradient(to bottom, #ffffff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .immersive-btn-primary {
+    background: #ffffff;
+    color: #050816;
+    padding: 10px 22px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .immersive-btn-primary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+  }
+  .immersive-btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .immersive-btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 14px 28px;
+    border-radius: 9999px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .immersive-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
+  }
+
+  .immersive-card {
+    padding: 24px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .immersive-card:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 12px 36px rgba(59, 130, 246, 0.08);
+  }
+
+  .immersive-tag-mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #3B82F6;
+    letter-spacing: 0.2em;
+    margin-bottom: 12px;
+    display: block;
+    font-weight: 600;
+  }
+
+  .abstract-globe {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent);
+  }
+
+  .globe-ring {
+    position: absolute;
+    width: 380px;
+    height: 380px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+  }
+
+  .stats-bar {
+    height: 60px;
+    padding: 0 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #03050c;
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hide standard cursors on clickable components when custom cursor is active */
+@media (min-width: 1024px) {
+  body, 
+  button, 
+  a, 
+  [role="button"], 
+  input, 
+  select, 
+  textarea, 
+  .interactive-card {
+    cursor: none !important;
+  }
+}

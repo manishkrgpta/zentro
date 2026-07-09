@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Zentro",
+  "description": "Premium AI-powered software engineering and technology solutions, specializing in AI automation, custom SaaS, web, and mobile development.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
