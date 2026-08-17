@@ -24,6 +24,36 @@ import { Project } from './types';
 export default function App() {
   const [activeView, setActiveView] = useState('home');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check localStorage for user preference
+    const stored = localStorage.getItem('zentro-dark-mode');
+    if (stored !== null) {
+      return stored === 'true';
+    }
+    // Otherwise, check system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  const toggleDarkMode = () => {
+    setDarkMode(prev => {
+      const newMode = !prev;
+      localStorage.setItem('zentro-dark-mode', newMode.toString());
+      return newMode;
+    });
+  };
+
+  useEffect(() => {
+    const root = document.getElementById('zentro-global-root');
+    if (root) {
+      if (darkMode) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
+    // Also update body class for consistency (optional)
+    document.body.classList.toggle('dark', darkMode);
+  }, [darkMode]);
   
   // Loading screen states
   const [loading, setLoading] = useState(true);
@@ -61,7 +91,7 @@ export default function App() {
   }, [loadPercent]);
 
   return (
-    <div className="relative min-h-screen text-white bg-[#050816] font-sans selection:bg-cyan-500/30 selection:text-cyan-200" id="zentro-global-root">
+    <div className="relative min-h-screen text-slate-900 bg-white font-sans selection:bg-violet-200 selection:text-violet-900" id="zentro-global-root">
       
       {/* Dynamic Floating Particles Backdrop */}
       <FloatingParticles />
@@ -79,7 +109,7 @@ export default function App() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: 'easeInOut' }}
-            className="fixed inset-0 z-50 bg-[#050816] flex flex-col items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-4"
             id="zentro-loading-gate"
           >
             <div className="relative flex flex-col items-center gap-6 max-w-sm w-full text-center">
@@ -91,31 +121,31 @@ export default function App() {
 
               {/* Branding name */}
               <div className="flex flex-col gap-1">
-                <span className="text-white font-sans text-2xl font-bold tracking-[0.25em] uppercase">
+                <span className="text-slate-900 font-sans text-2xl font-bold tracking-[0.25em] uppercase">
                   ZENTRO
                 </span>
-                <span className="text-[10px] font-mono text-cyan-400 tracking-widest font-semibold uppercase">
+                <span className="text-[10px] font-mono text-violet-600 tracking-widest font-semibold uppercase">
                   AI Technologies
                 </span>
               </div>
 
               {/* Terminal progress messages */}
-              <div className="w-full flex flex-col gap-2 mt-4 text-left bg-slate-950/80 p-4 rounded-xl border border-slate-900/80" id="boot-console">
-                <div className="flex items-center gap-1.5 border-b border-slate-900 pb-2 mb-1">
-                  <Terminal className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="text-[9px] font-mono text-slate-500">boot-sequence.sh</span>
+              <div className="w-full flex flex-col gap-2 mt-4 text-left bg-slate-50 p-4 rounded-xl border border-slate-200" id="boot-console">
+                <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2 mb-1">
+                  <Terminal className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[9px] font-mono text-slate-400">boot-sequence.sh</span>
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 min-h-[16px] leading-relaxed">
+                <div className="text-[10px] font-mono text-slate-500 min-h-[16px] leading-relaxed">
                   {bootMessage}
                 </div>
                 {/* Horizontal loader track */}
-                <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden mt-1 relative">
+                <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden mt-1 relative">
                   <div 
-                    className="absolute h-full left-0 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] transition-all duration-100"
+                    className="absolute h-full left-0 bg-violet-500 shadow-[0_0_8px_rgba(124,58,237,0.5)] transition-all duration-100"
                     style={{ width: `${loadPercent}%` }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[8px] font-mono text-slate-600 mt-1">
+                <div className="flex items-center justify-between text-[8px] font-mono text-slate-400 mt-1">
                   <span>SSL SECURE LINK</span>
                   <span>{loadPercent}% COMPLETE</span>
                 </div>
@@ -134,7 +164,7 @@ export default function App() {
             id="zentro-shell-container"
           >
             {/* Top glassmorphic backdrop Navigation bar */}
-            <Navbar activeView={activeView} setActiveView={setActiveView} />
+            <Navbar activeView={activeView} setActiveView={setActiveView} toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
 
             {/* Main view router wrapper with animation hooks */}
             <main className="flex-grow">

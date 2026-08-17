@@ -428,7 +428,7 @@ export const monthlyServicesData: SimpleServicePrice[] = [
   { name: 'Analytics & Monthly Reports', price: '$49/mo' },
   { name: 'AI Customer Support Agent', price: '$149/mo' },
   { name: 'AI Voice Receptionist', price: '$199/mo' },
-  { name: 'AI Email Assistant', price: '$99/mo' }
+  { name: 'AI Email Assistant', price: '$150/mo' }
 ];
 
 export const aiAutomationServicesData: SimpleServicePrice[] = [

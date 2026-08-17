@@ -14,7 +14,6 @@ export default function CustomCursor() {
   const [isMobile, setIsMobile] = useState(true);
 
   useEffect(() => {
-    // Detect mobile touch screens
     const checkTouch = () => {
       const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       setIsMobile(hasTouch);
@@ -31,10 +30,7 @@ export default function CustomCursor() {
     const onMouseMove = (e: MouseEvent) => {
       mousePos.x = e.clientX;
       mousePos.y = e.clientY;
-
       if (!isVisible) setIsVisible(true);
-
-      // Instantly position the small center dot
       if (cursorDotRef.current) {
         cursorDotRef.current.style.transform = `translate3d(${mousePos.x}px, ${mousePos.y}px, 0)`;
       }
@@ -43,39 +39,32 @@ export default function CustomCursor() {
     const onMouseDown = () => setIsClicking(true);
     const onMouseUp = () => setIsClicking(false);
 
-    // Dynamic scale-up when hovering over clickables
     const addHoverEvents = () => {
       const interactiveElements = document.querySelectorAll(
         'button, a, [role="button"], input, select, textarea, .interactive-card, canvas'
       );
-
       interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => setIsHovering(true));
         el.addEventListener('mouseleave', () => setIsHovering(false));
       });
     };
 
-    // Keep ring position smoothed (lerping)
     let animationFrameId: number;
     const updateRing = () => {
-      const ease = 0.15; // smooth lag speed
+      const ease = 0.15;
       ringPos.x += (mousePos.x - ringPos.x) * ease;
       ringPos.y += (mousePos.y - ringPos.y) * ease;
-
       if (cursorRingRef.current) {
         cursorRingRef.current.style.transform = `translate3d(${ringPos.x - 16}px, ${ringPos.y - 16}px, 0)`;
       }
-
       animationFrameId = requestAnimationFrame(updateRing);
     };
 
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
-
     updateRing();
 
-    // Setup hover triggers after initial render
     const observer = new MutationObserver(addHoverEvents);
     observer.observe(document.body, { childList: true, subtree: true });
     addHoverEvents();
@@ -93,21 +82,19 @@ export default function CustomCursor() {
 
   return (
     <>
-      {/* Tiny precise pointer dot */}
       <div 
         ref={cursorDotRef}
-        className="fixed top-0 left-0 w-2 h-2 bg-cyan-400 rounded-full pointer-events-none z-50 transition-transform duration-[0.03s] ease-out will-change-transform mix-blend-screen"
+        className="fixed top-0 left-0 w-2 h-2 bg-violet-500 rounded-full pointer-events-none z-50 transition-transform duration-[0.03s] ease-out will-change-transform"
         id="custom-cursor-dot"
       />
-      {/* Smoothing larger orbital ring */}
       <div 
         ref={cursorRingRef}
         className={`fixed top-0 left-0 w-8 h-8 rounded-full pointer-events-none z-50 transition-all duration-200 ease-out will-change-transform ${
           isClicking 
-            ? 'scale-75 bg-purple-500/10 border border-purple-400/80' 
+            ? 'scale-75 bg-fuchsia-200/50 border border-fuchsia-400' 
             : isHovering 
-              ? 'scale-[1.6] bg-cyan-500/15 border border-cyan-300' 
-              : 'scale-100 bg-transparent border border-blue-500/40'
+              ? 'scale-[1.6] bg-violet-100/50 border border-violet-400' 
+              : 'scale-100 bg-transparent border border-violet-300'
         }`}
         id="custom-cursor-ring"
       />

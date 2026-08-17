@@ -8,20 +8,18 @@ type ContactViewProps = {
 export default function ContactView({ setActiveView }: ContactViewProps) {
   const [selectedServices, setSelectedServices] = useState<string[]>(['ai-automation']);
   const [budgetRange, setBudgetRange] = useState('1500-3000');
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [countryCode, setCountryCode] = useState('+1');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
   const [brief, setBrief] = useState('');
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitLogs, setSubmitLogs] = useState<string[]>([]);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [ticketRef, setTicketRef] = useState('');
+  const [serverMessage, setServerMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
   const [recentContacts, setRecentContacts] = useState<any[]>([]);
   const [showRecent, setShowRecent] = useState(false);
 
@@ -33,8 +31,8 @@ export default function ContactView({ setActiveView }: ContactViewProps) {
   }, [submitSuccess, setActiveView]);
 
   const services = [
-    { id: 'ai-automation', label: 'AI Agents & Automation', priceFactor: 8500 },
-    { id: 'custom-websites', label: 'Custom Websites & Web Apps', priceFactor: 4500 },
+    { id: 'ai-automation', label: 'AI Agents & Automation', priceFactor: 1750 },
+    { id: 'custom-websites', label: 'Custom Websites & Web Apps', priceFactor: 2000 },
     { id: 'saas-development', label: 'SaaS Platform Development', priceFactor: 12000 },
     { id: 'mobile-apps', label: 'Mobile Apps (iOS/Android)', priceFactor: 7000 },
     { id: 'ecommerce', label: 'E‑commerce Platforms', priceFactor: 9000 },
@@ -55,6 +53,34 @@ export default function ContactView({ setActiveView }: ContactViewProps) {
     { value: '10000-20000', label: '10,000 - 20,000' },
     { value: '20000-40000', label: '20,000 - 40,000' },
     { value: '40000-50000', label: '40,000 - 50,000' },
+  ];
+
+  const countryOptions = [
+    { value: '+1', label: '🇺🇸 United States +1' },{ value: '+44', label: '🇬🇧 United Kingdom +44' },{ value: '+91', label: '🇮🇳 India +91' },
+    { value: '+61', label: '🇦🇺 Australia +61' },{ value: '+49', label: '🇩🇪 Germany +49' },{ value: '+33', label: '🇫🇷 France +33' },
+    { value: '+39', label: '🇮🇹 Italy +39' },{ value: '+81', label: '🇯🇵 Japan +81' },{ value: '+82', label: '🇰🇷 South Korea +82' },
+    { value: '+34', label: '🇪🇸 Spain +34' },{ value: '+55', label: '🇧🇷 Brazil +55' },{ value: '+7', label: '🇷🇺 Russia +7' },
+    { value: '+27', label: '🇿🇦 South Africa +27' },{ value: '+64', label: '🇳🇿 New Zealand +64' },{ value: '+852', label: '🇭🇰 Hong Kong +852' },
+    { value: '+886', label: '🇹🇼 Taiwan +886' },{ value: '+971', label: '🇦🇪 United Arab Emirates +971' },{ value: '+47', label: '🇳🇴 Norway +47' },
+    { value: '+46', label: '🇸🇪 Sweden +46' },{ value: '+31', label: '🇳🇱 Netherlands +31' },{ value: '+32', label: '🇧🇪 Belgium +32' },
+    { value: '+353', label: '🇮🇪 Ireland +353' },{ value: '+60', label: '🇲🇾 Malaysia +60' },{ value: '+65', label: '🇸🇬 Singapore +65' },
+    { value: '+66', label: '🇹🇭 Thailand +66' },{ value: '+62', label: '🇮🇩 Indonesia +62' },{ value: '+63', label: '🇵🇭 Philippines +63' },
+    { value: '+84', label: '🇻🇳 Vietnam +84' },{ value: '+86', label: '🇨🇳 China +86' },{ value: '+38', label: '🇺🇦 Ukraine +380' },
+    { value: '+48', label: '🇵🇱 Poland +48' },{ value: '+420', label: '🇨🇿 Czech Republic +420' },{ value: '+36', label: '🇭🇺 Hungary +36' },
+    { value: '+52', label: '🇲🇽 Mexico +52' },{ value: '+1', label: '🇨🇦 Canada +1' },{ value: '+966', label: '🇸🇦 Saudi Arabia +966' },
+    { value: '+972', label: '🇮🇱 Israel +972' },{ value: '+351', label: '🇵🇹 Portugal +351' },{ value: '+30', label: '🇬🇷 Greece +30' },
+    { value: '+358', label: '🇫🇮 Finland +358' },{ value: '+45', label: '🇩🇰 Denmark +45' },{ value: '+41', label: '🇨🇭 Switzerland +41' },
+    { value: '+43', label: '🇦🇹 Austria +43' },{ value: '+90', label: '🇹🇷 Turkey +90' },{ value: '+234', label: '🇳🇬 Nigeria +234' },
+    { value: '+254', label: '🇰🇪 Kenya +254' },{ value: '+233', label: '🇬🇭 Ghana +233' },{ value: '+27', label: '🇿🇦 South Africa +27' },
+    { value: '+54', label: '🇦🇷 Argentina +54' },{ value: '+56', label: '🇨🇱 Chile +56' },{ value: '+57', label: '🇨🇴 Colombia +57' },
+    { value: '+51', label: '🇵🇪 Peru +51' },{ value: '+506', label: '🇨🇷 Costa Rica +506' },{ value: '+507', label: '🇵🇦 Panama +507' },
+    { value: '+20', label: '🇪🇬 Egypt +20' },{ value: '+212', label: '🇲🇦 Morocco +212' },{ value: '+216', label: '🇹🇳 Tunisia +216' },
+    { value: '+595', label: '🇵🇾 Paraguay +595' },{ value: '+1', label: '🇧🇧 Barbados +1' },{ value: '+350', label: '🇬🇮 Gibraltar +350' },
+    { value: '+354', label: '🇮🇸 Iceland +354' },{ value: '+374', label: '🇦🇲 Armenia +374' },{ value: '+973', label: '🇧🇭 Bahrain +973' },
+    { value: '+880', label: '🇧🇩 Bangladesh +880' },{ value: '+855', label: '🇰🇭 Cambodia +855' },{ value: '+965', label: '🇰🇼 Kuwait +965' },
+    { value: '+98', label: '🇮🇷 Iran +98' },{ value: '+92', label: '🇵🇰 Pakistan +92' },{ value: '+947', label: '🇱🇰 Sri Lanka +94' },
+    { value: '+249', label: '🇸🇩 Sudan +249' },{ value: '+255', label: '🇹🇿 Tanzania +255' },{ value: '+260', label: '🇿🇲 Zambia +260' },
+    { value: '+263', label: '🇿🇼 Zimbabwe +263' },{ value: '+974', label: '🇶🇦 Qatar +974' },{ value: '+968', label: '🇴🇲 Oman +968' },
   ];
 
   const calculateBudgetRange = () => {
@@ -78,237 +104,215 @@ export default function ContactView({ setActiveView }: ContactViewProps) {
       setErrorMessage('Please complete your name, email address, budget range, and system objectives.');
       return;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(String(email))) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
-    }
-
+    if (!emailRegex.test(String(email))) { setErrorMessage('Please enter a valid email address.'); return; }
     if (phone) {
-      const digits = String(phone).replace(/\s+/g, '');
-      if (!/^\d+$/.test(digits)) {
-        setErrorMessage('Phone number must contain digits only (0-9).');
-        return;
-      }
+      const digits = String(phone).replace(/\D/g, '');
+      if (!/^\d+$/.test(digits)) { setErrorMessage('Phone number must contain digits only and be up to 12 digits.'); return; }
+      if (digits.length > 12) { setErrorMessage('Phone number can contain at most 12 digits.'); return; }
     }
-
     setErrorMessage('');
     setIsSubmitting(true);
     setSubmitLogs(['[INFO] Preparing secure request package...']);
     setSubmitSuccess(false);
-
     try {
-      const response = await fetch('/api/contact', {
+      const apiUrl = '/api/contact';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, countryCode, phone, company, budgetRange, brief, selectedServices, budget: budgetRange || budget.label }),
       });
-
       let result: any = null;
       const text = await response.text();
-      try { result = text ? JSON.parse(text) : {}; } catch { result = { message: text }; }
-
+      try { result = text ? JSON.parse(text) : {}; } catch { result = { message: text || 'Invalid server response.' }; }
       setSubmitLogs((p) => [...p, `[HTTP ${response.status}] ${JSON.stringify(result)}`]);
-      if (!response.ok) throw new Error(result?.message || 'Failed to submit contact request.');
-
+      if (!response.ok) { const errorText = result?.message || result?.error || text || `Request failed with status ${response.status}`; throw new Error(errorText); }
       const generatedRef = result?.reference || `ZNT-${Math.floor(100000 + Math.random() * 900000)}`;
       setTicketRef(generatedRef);
+      setServerMessage(result?.message || 'Contact request saved successfully.');
       setSubmitLogs((p) => [...p, '[SUCCESS] Contact request saved.']);
       setSubmitSuccess(true);
-
-      // reset form
       setName(''); setEmail(''); setPhone(''); setCompany(''); setBrief(''); setSelectedServices([]); setBudgetRange('1500-3000');
     } catch (err: any) {
       const message = err?.message || 'Unexpected error while submitting the request.';
       setErrorMessage(message);
       setSubmitLogs((p) => [...p, `[ERROR] ${message}`]);
       try { console.error('[Contact submit] error:', err); } catch {}
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
   return (
-    <div className="relative w-full pt-28 pb-20" id="zentro-contact-view-container">
+    <div className="relative w-full pt-28 pb-20 bg-white" id="zentro-contact-view-container">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-        <div className="text-left mb-16 max-w-4xl border-b border-slate-900 pb-10 flex flex-col gap-3">
+        <div className="text-left mb-16 max-w-4xl border-b border-slate-200 pb-10 flex flex-col gap-3">
           <span className="immersive-tag-mono">// SYSTEM REVIEW</span>
-          <h1 className="text-4xl sm:text-5xl font-sans font-extrabold text-white tracking-tight mt-2">Book a Consultation</h1>
-          <p className="text-white/60 text-sm sm:text-base">Configure your desired parameters below to receive an approximate budget estimate.</p>
+          <h1 className="text-4xl sm:text-5xl font-sans font-extrabold text-slate-900 tracking-tight mt-2">Book a Consultation</h1>
+          <p className="text-slate-500 text-sm sm:text-base">Configure your desired parameters below to receive an approximate budget estimate.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-20">
-          <div className="lg:col-span-5 bg-slate-950 border border-slate-900 rounded-3xl p-6 text-left relative overflow-hidden" id="project-calculator-block">
-            <div className="flex items-center gap-2 text-cyan-400 font-mono text-[10px] uppercase font-bold tracking-wider mb-4">
+          <div className="lg:col-span-5 bg-white border border-slate-200 rounded-3xl p-6 text-left relative overflow-hidden" id="project-calculator-block">
+            <div className="flex items-center gap-2 text-violet-600 font-mono text-[10px] uppercase font-bold tracking-wider mb-4">
               <Sliders className="w-3.5 h-3.5" />
               <span>1. Config Project Parameters</span>
             </div>
-
             <div className="flex flex-col gap-3 mb-4" id="calculator-checkbox-list">
               <span className="text-xs font-mono text-slate-500 uppercase font-semibold">Select Services Needed</span>
               <div className="flex flex-col gap-2">
                 {services.map((item) => {
                   const isChecked = selectedServices.includes(item.id);
                   return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleServiceToggle(item.id)}
-                      className={`px-4 py-3 rounded-xl border text-xs text-left transition-all cursor-pointer flex items-center justify-between ${isChecked ? 'bg-blue-600/10 border-blue-500/30 text-white font-semibold' : 'bg-slate-950/80 border-slate-900 text-slate-400 hover:text-slate-300'}`}
-                    >
+                    <button key={item.id} onClick={() => handleServiceToggle(item.id)}
+                      className={`px-4 py-3 rounded-xl border text-xs text-left transition-all cursor-pointer flex items-center justify-between ${isChecked ? 'bg-violet-100 border-violet-300 text-slate-800 font-semibold' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'}`}>
                       <span>{item.label}</span>
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-cyan-500 border-cyan-400' : 'border-slate-800'}`}>
-                        {isChecked && <CheckCircle2 className="w-3.5 h-3.5 text-slate-950" />}
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-violet-600 border-violet-600 text-white' : 'border-slate-300'}`}>
+                        {isChecked && <CheckCircle2 className="w-3.5 h-3.5" />}
                       </div>
                     </button>
                   );
                 })}
               </div>
             </div>
-
-            <div className="bg-[#0a0f29]/40 border border-slate-900 p-4 rounded-2xl flex flex-col gap-2 mt-2">
+            <div className="bg-violet-50/50 border border-slate-200 p-4 rounded-2xl flex flex-col gap-2 mt-2">
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="text-slate-500 uppercase">Suggested Market Budget</span>
-                <span className="text-cyan-400 font-bold">{selectedServices.length > 0 ? '50% off agency' : 'CHOOSE OPTIONS'}</span>
+                <span className="text-violet-600 font-bold">{selectedServices.length > 0 ? '50% off agency' : 'CHOOSE OPTIONS'}</span>
               </div>
-              <div className="text-white text-2xl font-mono font-bold mt-1 text-cyan-400">{selectedServices.length > 0 ? budget.label : '$0.00'}</div>
-              <p className="text-[10px] font-sans text-slate-500 leading-normal mt-1 border-t border-slate-900/80 pt-2">*Ballpark estimate.</p>
+              <div className="text-slate-900 text-2xl font-mono font-bold mt-1">{selectedServices.length > 0 ? budget.label : '$0.00'}</div>
+              <p className="text-[10px] font-sans text-slate-400 leading-normal mt-1 border-t border-slate-200 pt-2">*Ballpark estimate.</p>
             </div>
           </div>
 
-          <div className="lg:col-span-7 bg-slate-950/40 border border-slate-900 rounded-3xl p-6 sm:p-8 text-left relative overflow-hidden" id="consultation-form-block">
-            <div className="flex items-center gap-2 text-cyan-400 font-mono text-[10px] uppercase font-bold tracking-wider mb-6">
+          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 text-left relative overflow-hidden" id="consultation-form-block">
+            <div className="flex items-center gap-2 text-violet-600 font-mono text-[10px] uppercase font-bold tracking-wider mb-6">
               <Mail className="w-3.5 h-3.5" />
               <span>2. System Specification Brief</span>
             </div>
-
             {submitSuccess ? (
-              <div className="bg-slate-950/80 border border-emerald-500/30 p-8 rounded-2xl text-center flex flex-col items-center gap-4 animate-fade-in" id="submission-success-card">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div className="bg-slate-50 border border-emerald-200 p-8 rounded-2xl text-center flex flex-col items-center gap-4 animate-fade-in" id="submission-success-card">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600">
                   <CheckCircle2 className="w-6 h-6 animate-pulse" />
                 </div>
-                <h3 className="text-white text-lg font-sans font-bold mt-2">Consultation Booking Secure!</h3>
-                <p className="text-slate-400 text-xs font-sans leading-relaxed max-w-md">Your project specifications have been securely transmitted. We will review and respond within 12 business hours.</p>
-                <div className="bg-slate-900 border border-slate-950 px-4 py-2.5 rounded-xl text-xs font-mono text-slate-300 flex items-center gap-2 mt-2">
-                  <span>Reference ID:</span>
-                  <span className="text-cyan-400 font-bold">{ticketRef}</span>
-                </div>
-
+                <h3 className="text-slate-900 text-lg font-sans font-bold mt-2">Consultation Booking Secure!</h3>
+                <p className="text-slate-500 text-xs font-sans leading-relaxed max-w-md">{serverMessage || 'Your project specifications have been securely transmitted.'}</p>
                 <div className="mt-4 flex flex-col items-center gap-3 w-full">
-                  <button onClick={() => setSubmitSuccess(false)} className="px-5 py-2.5 bg-[#0d153a] w-full max-w-xs text-xs font-mono text-cyan-400 font-semibold rounded-lg">Submit Another Request</button>
+                  <button onClick={() => setSubmitSuccess(false)} className="px-5 py-2.5 bg-violet-100 w-full max-w-xs text-xs font-mono text-violet-700 font-semibold rounded-lg">Submit Another Request</button>
                   <div className="flex gap-2 mt-2">
-                    <button onClick={async () => { try { const res = await fetch('/api/contacts'); const data = await res.json(); setRecentContacts(data.rows || []); setShowRecent(true); } catch (e) { console.error(e); setErrorMessage('Failed to fetch recent contacts.'); } }} className="px-4 py-2 bg-slate-800 text-xs text-white rounded-lg">View Recent Submissions</button>
-                    <a href="/api/contacts/download" className="px-4 py-2 bg-slate-800 text-xs text-white rounded-lg" download>Download CSV</a>
-                    <button onClick={async () => { try { setSubmitLogs(p=>[...p,'[ACTION] Resend last entry...']); const r = await fetch('/api/contact/resend', { method: 'POST' }); const j = await r.json(); if (!r.ok) throw new Error(j?.message || 'Resend failed'); setSubmitLogs(p=>[...p,`[RESEND] ${j.message}`]); } catch (e:any) { setSubmitLogs(p=>[...p,`[RESEND-ERROR] ${e.message||e}`]); setErrorMessage('Resend failed: '+(e.message||e)); } }} className="px-4 py-2 bg-amber-600 text-xs text-black rounded-lg">Resend Last Email</button>
+                    <button onClick={async () => { try { const res = await fetch('/api/contacts'); const data = await res.json(); setRecentContacts(data.rows || []); setShowRecent(true); } catch (e) { console.error(e); setErrorMessage('Failed to fetch recent contacts.'); } }} className="px-4 py-2 bg-slate-200 text-xs text-slate-700 rounded-lg">View Recent Submissions</button>
+                    <a href="/api/contacts/download" className="px-4 py-2 bg-slate-200 text-xs text-slate-700 rounded-lg" download>Download CSV</a>
+                    <button onClick={async () => { try { setSubmitLogs(p=>[...p,'[ACTION] Resend last entry...']); const r = await fetch('/api/contact/resend', { method: 'POST' }); const j = await r.json(); if (!r.ok) throw new Error(j?.message || 'Resend failed'); setSubmitLogs(p=>[...p,`[RESEND] ${j.message}`]); } catch (e:any) { setSubmitLogs(p=>[...p,`[RESEND-ERROR] ${e.message||e}`]); setErrorMessage('Resend failed: '+(e.message||e)); } }} className="px-4 py-2 bg-amber-200 text-xs text-amber-800 rounded-lg">Resend Last Email</button>
                   </div>
                   <div className="mt-2 text-xs text-slate-400">You will be redirected to the homepage shortly.</div>
                 </div>
               </div>
             ) : isSubmitting ? (
-              <div className="flex flex-col bg-slate-950 rounded-2xl border border-slate-900 shadow-inner overflow-hidden text-left h-80" id="submission-terminal-console">
-                <div className="bg-slate-900/60 px-4 py-2 border-b border-slate-900 flex items-center justify-between">
+              <div className="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-inner overflow-hidden text-left h-80" id="submission-terminal-console">
+                <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Terminal className="w-3.5 h-3.5 text-slate-500 animate-spin" />
-                    <span className="text-[10px] font-mono text-slate-400">secure-gateway-tx.log</span>
+                    <Terminal className="w-3.5 h-3.5 text-slate-400 animate-spin" />
+                    <span className="text-[10px] font-mono text-slate-500">secure-gateway-tx.log</span>
                   </div>
                 </div>
-                <div className="p-4 flex-grow font-mono text-[10px] text-slate-400 overflow-y-auto space-y-1.5 leading-normal">
-                  {submitLogs.map((log, idx) => <div key={idx} className="text-slate-400">{log}</div>)}
+                <div className="p-4 flex-grow font-mono text-[10px] text-slate-500 overflow-y-auto space-y-1.5 leading-normal">
+                  {submitLogs.map((log, idx) => <div key={idx} className="text-slate-500">{log}</div>)}
                 </div>
               </div>
             ) : (
               <form onSubmit={handleFormSubmit} className="space-y-4" id="consultation-booking-form">
-                {errorMessage ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 px-4 py-3 text-sm text-rose-200">{errorMessage}</div> : null}
-
+                {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div> : null}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Your Name *</label>
-                    <input type="text" placeholder="e.g. John Doe" required value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-3 text-xs text-white" />
+                    <input type="text" placeholder="e.g. John Doe" required value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-400" />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Email Address *</label>
-                    <input type="email" placeholder="e.g. john@company.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-3 text-xs text-white" />
+                    <input type="email" placeholder="e.g. john@company.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-400" />
                   </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Company / Product</label>
-                    <input type="text" placeholder="e.g. Acme Corp or Project X" value={company} onChange={(e) => setCompany(e.target.value)} className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-3 text-xs text-white" />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Company / Product</label>
+                  <input type="text" placeholder="e.g. Acme Corp or Project X" value={company} onChange={(e) => setCompany(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-400" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Country Code</label>
-                    <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-3 text-xs text-white">
-                      <option value="+1">🇺🇸 USA +1</option>
-                      <option value="+91">🇮🇳 India +91</option>
-                      <option value="+44">🇬🇧 United Kingdom +44</option>
+                    <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900">
+                      {countryOptions.map((opt) => (<option key={opt.value + opt.label} value={opt.value}>{opt.label}</option>))}
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Phone Number</label>
-                    <input type="tel" placeholder="e.g. 9876543210" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} inputMode="numeric" pattern="[0-9]*" className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-3 text-xs text-white" />
+                    <input type="tel" placeholder="e.g. 9876543210" value={phone} maxLength={12} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} inputMode="numeric" pattern="[0-9]*" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-violet-400" />
+                    <span className="text-[10px] text-slate-400">Up to 12 digits only.</span>
                   </div>
                 </div>
-
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Select Budget Range *</label>
-                  <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} required className="w-full bg-slate-950 border border-slate-900 rounded-xl px-4 py-3 text-xs text-white">
+                  <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} required className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-900">
                     {budgetOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
                 </div>
-
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] font-mono text-slate-500 uppercase font-bold">Describe Your System Objectives *</label>
-                  <textarea required value={brief} onChange={(e) => setBrief(e.target.value)} className="w-full bg-slate-950 border border-slate-900 rounded-xl p-4 text-xs text-white h-32" />
+                  <textarea required value={brief} onChange={(e) => setBrief(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl p-4 text-xs text-slate-900 h-32 placeholder-slate-400 focus:outline-none focus:border-violet-400" />
                 </div>
-
-                <button type="submit" className="w-full py-3.5 bg-white rounded-full text-xs font-bold text-[#050816] flex items-center justify-center gap-2 mt-2"><Send className="w-3.5 h-3.5 text-[#050816]" /> Submit Secure Request</button>
+                <button type="submit" className="w-full py-3.5 bg-violet-600 hover:bg-violet-500 rounded-full text-xs font-bold text-white flex items-center justify-center gap-2 mt-2 shadow-[0_4px_10px_rgba(124,58,237,0.2)]"><Send className="w-3.5 h-3.5 text-white" /> Submit Secure Request</button>
               </form>
             )}
-
             {showRecent && (
-              <div className="mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-4 text-sm text-slate-300">
-                <div className="flex items-center justify-between mb-2">
-                  <strong>Recent Submissions</strong>
-                  <button onClick={() => setShowRecent(false)} className="text-xs text-slate-400">Close</button>
-                </div>
-                {recentContacts.length === 0 ? (<div className="text-xs text-slate-500">No submissions found.</div>) : (
+              <div className="mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-600">
+                <div className="flex items-center justify-between mb-2"><strong>Recent Submissions</strong><button onClick={() => setShowRecent(false)} className="text-xs text-slate-400">Close</button></div>
+                {recentContacts.length === 0 ? (<div className="text-xs text-slate-400">No submissions found.</div>) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {recentContacts.slice().reverse().map((r, i) => (
-                      <div key={i} className="border-b border-slate-800 pb-2">
-                        <div className="text-xs text-slate-400">{r.timestamp} — <span className="text-white">{r.name}</span></div>
-                        <div className="text-[11px] text-slate-300">{r.email} • {r.countryCode} {r.phone}</div>
-                        <div className="text-[11px] text-slate-500">Budget: {r.budgetRange} • Services: {r.services}</div>
-                        <div className="text-[11px] text-slate-400 mt-1">{r.brief}</div>
+                      <div key={i} className="border-b border-slate-200 pb-2">
+                        <div className="text-xs text-slate-400">{r.timestamp} — <span className="text-slate-800">{r.name}</span></div>
+                        <div className="text-[11px] text-slate-500">{r.email} • {r.countryCode} {r.phone}</div>
+                        <div className="text-[11px] text-slate-400">Budget: {r.budgetRange} • Services: {r.services}</div>
+                        <div className="text-[11px] text-slate-500 mt-1">{r.brief}</div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
             )}
-
           </div>
         </div>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="direct-contact-grid">
-          {[
-            { icon: <Mail className="w-4 h-4 text-cyan-400" />, label: 'Secure Email Address', value: 'hello@zentro.ai', sub: 'PGP signature verified' },
-            { icon: <Phone className="w-4 h-4 text-blue-400" />, label: '🇺🇸 USA Contact', value: '+1 (800) 555-1001', sub: 'Regional sales desk' },
-            { icon: <Phone className="w-4 h-4 text-blue-400" />, label: '🇪🇺 Europe Contact', value: '+44 20 7946 0958', sub: 'EU client support' },
-            { icon: <Phone className="w-4 h-4 text-blue-400" />, label: '🇦🇪 UAE Contact', value: '+971 4 123 4567', sub: 'MENA project inquiries' }
-          ].map((item, idx) => (
-            <div key={idx} className="bg-slate-950 border border-slate-900 p-5 rounded-2xl text-left flex flex-col gap-3" id={`contact-channel-${idx}`}>
-              <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-900">{item.icon}</div>
+        <section className="max-w-2xl mx-auto" id="direct-contact-grid">
+          <div className="bg-white border border-slate-200 p-5 rounded-2xl text-left flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 md:gap-8">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-center shrink-0">
+                <Mail className="w-4 h-4 text-violet-600" />
+              </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold leading-none">{item.label}</span>
-                <span className="text-white text-xs font-sans font-bold mt-1.5 leading-tight">{item.value}</span>
-                <span className="text-[9px] font-mono text-slate-600 mt-1 leading-none">{item.sub}</span>
+                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold leading-none">Email</span>
+                <span className="text-slate-900 text-xs font-sans font-bold mt-1.5 leading-tight">mrxtechnp@gmail.com</span>
               </div>
             </div>
-          ))}
+            <div className="hidden sm:block w-px h-8 bg-slate-200" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-center shrink-0">
+                <Phone className="w-4 h-4 text-fuchsia-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold leading-none">🇳🇵 Nepal</span>
+                <span className="text-slate-900 text-xs font-sans font-bold mt-1.5 leading-tight">+977 9807242842</span>
+              </div>
+            </div>
+            <div className="hidden sm:block w-px h-8 bg-slate-200" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-center shrink-0">
+                <Phone className="w-4 h-4 text-fuchsia-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold leading-none">🇳🇵 Nepal</span>
+                <span className="text-slate-900 text-xs font-sans font-bold mt-1.5 leading-tight">+977 981-4215561</span>
+              </div>
+            </div>
+          </div>
         </section>
-
       </div>
     </div>
   );

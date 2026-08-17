@@ -1,7 +1,6 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -9,12 +8,8 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const EMAIL_SENDER = process.env.EMAIL_SENDER || 'manishkrgpta30@gmail.com';
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_SENDER = 'mrxtechnp@gmail.com';
 const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER || 'manishkrgpta@gmail.com';
 const CSV_PATH = path.resolve(process.cwd(), 'contacts.csv');
 
@@ -49,20 +44,6 @@ const appendContactCsv = async (row) => {
   await fs.promises.appendFile(CSV_PATH, line, 'utf8');
 };
 
-if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-  console.warn('Warning: SMTP credentials are not configured. Contact form email delivery will fail until SMTP_HOST, SMTP_USER, and SMTP_PASS are provided.');
-}
-
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: SMTP_PORT === 465,
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-});
-
 app.post('/api/contact', async (req, res) => {
   const { name, email, countryCode, phone, company, budgetRange, brief, selectedServices, budget } = req.body;
 
@@ -76,11 +57,14 @@ app.post('/api/contact', async (req, res) => {
     return res.status(400).json({ message: 'A valid email address is required.' });
   }
 
-  // Phone must be digits only if provided
+  // Phone must be digits only and no more than 12 digits if provided
   if (phone) {
-    const digits = String(phone).replace(/\s+/g, '');
+    const digits = String(phone).replace(/\D/g, '');
     if (!/^\d+$/.test(digits)) {
       return res.status(400).json({ message: 'Phone number must contain digits only.' });
+    }
+    if (digits.length > 12) {
+      return res.status(400).json({ message: 'Phone number can contain at most 12 digits.' });
     }
   }
 
@@ -132,44 +116,44 @@ app.post('/api/contact', async (req, res) => {
       brief
     });
 
-    if (SENDGRID_API_KEY) {
-      // Send via SendGrid API when API key is provided
+    let emailStatus = 'skipped';
+
+    if (RESEND_API_KEY) {
+      emailStatus = 'sending';
       try {
-        await fetch('https://api.sendgrid.com/v3/mail/send', {
+        const resendRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${SENDGRID_API_KEY}`,
+            Authorization: `Bearer ${RESEND_API_KEY}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            personalizations: [{ to: [{ email: EMAIL_RECEIVER }] }],
-            from: { email: EMAIL_SENDER },
+            from: EMAIL_SENDER,
+            to: [EMAIL_RECEIVER],
             subject,
-            content: [
-              { type: 'text/plain', value: text },
-              { type: 'text/html', value: html }
-            ]
+            text,
+            html,
+            reply_to: email || EMAIL_SENDER,
           })
         });
-      } catch (sgErr) {
-        console.error('SendGrid send error:', sgErr);
-        throw sgErr;
+
+        if (!resendRes.ok) {
+          const responseText = await resendRes.text();
+          throw new Error(`Resend API failed: ${resendRes.status} ${responseText}`);
+        }
+      } catch (sendErr) {
+        console.error('Resend send error:', sendErr);
+        emailStatus = 'failed';
       }
-    } else if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-      const info = await transporter.sendMail({
-        from: EMAIL_SENDER,
-        to: EMAIL_RECEIVER,
-        replyTo: email,
-        subject,
-        text,
-        html,
-      });
-      console.log('SMTP send info:', info);
     } else {
-      console.warn('Email not configured - skipping email send. Provide SMTP_* or SENDGRID_API_KEY to enable email delivery.');
+      console.warn('Resend API key not configured - skipping email send. Provide RESEND_API_KEY to enable email delivery.');
     }
 
-    return res.json({ message: 'Contact request saved successfully.', reference });
+    const successMessage = emailStatus === 'failed'
+      ? 'Contact request saved, but email delivery failed.'
+      : 'Contact request saved successfully.';
+
+    return res.json({ message: successMessage, reference, emailStatus });
   } catch (error) {
     console.error('Error handling contact request:', error);
     const message = error && error.message ? String(error.message) : 'Unable to process contact request.';
@@ -248,21 +232,26 @@ app.post('/api/contact/resend', async (req, res) => {
     `;
     const text = `Resent contact request from ${name}\n\nReference: ${reference}\nName: ${name}\nEmail: ${email}\nPhone: ${countryCode || ''} ${phone || 'N/A'}\nCompany: ${company || 'N/A'}\nBudget Range: ${budgetRange || 'N/A'}\nEstimated Budget: ${budget || 'N/A'}\nServices: ${services}\nObjectives: ${brief}`;
 
-    if (SENDGRID_API_KEY) {
-      const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    if (RESEND_API_KEY) {
+      const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ personalizations: [{ to: [{ email: EMAIL_RECEIVER }] }], from: { email: EMAIL_SENDER }, subject, content: [{ type: 'text/plain', value: text }, { type: 'text/html', value: html }] })
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: EMAIL_SENDER,
+          to: [EMAIL_RECEIVER],
+          subject,
+          text,
+          html,
+          reply_to: email || EMAIL_SENDER,
+        })
       });
-      const sgText = await sgRes.text();
-      console.log('SendGrid resend status:', sgRes.status, sgText);
-      if (!sgRes.ok) throw new Error(`SendGrid resend failed: ${sgRes.status}`);
-    } else if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-      const info = await transporter.sendMail({ from: EMAIL_SENDER, to: EMAIL_RECEIVER, replyTo: email, subject, text, html });
-      console.log('SMTP resend info:', info);
+
+      const resendText = await resendRes.text();
+      console.log('Resend resend status:', resendRes.status, resendText);
+      if (!resendRes.ok) throw new Error(`Resend resend failed: ${resendRes.status}`);
     } else {
-      console.warn('Email not configured - skipping resend.');
-      return res.status(400).json({ message: 'Email not configured on server.' });
+      console.warn('Resend API key not configured - skipping resend.');
+      return res.status(400).json({ message: 'Email not configured on server. Provide RESEND_API_KEY.' });
     }
 
     return res.json({ message: 'Resend attempted.', reference });

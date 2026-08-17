@@ -40,17 +40,19 @@ export default function FloatingParticles() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Initialize particles
+    // Initialize particles - reduce count on mobile
     const initParticles = () => {
       particles = [];
-      const density = Math.min(60, Math.floor((width * height) / 25000)); // Adaptive particle count
+      const isMobile = width < 768;
+      const maxParticles = isMobile ? 20 : 60;
+      const density = Math.min(maxParticles, Math.floor((width * height) / (isMobile ? 60000 : 25000)));
       
       for (let i = 0; i < density; i++) {
         const size = Math.random() * 1.5 + 0.5;
-        // Alternating electric blue, purple, cyan, slate
-        let color = '99, 102, 241'; // Indigo-ish
-        if (i % 3 === 1) color = '139, 92, 246'; // Purple
-        if (i % 3 === 2) color = '34, 211, 238'; // Cyan
+        // Alternating violet, purple, fuchsia tones
+        let color = '139, 92, 246'; // Violet
+        if (i % 3 === 1) color = '192, 132, 252'; // Fuchsia
+        if (i % 3 === 2) color = '168, 85, 247'; // Purple
 
         particles.push({
           x: Math.random() * width,
@@ -58,7 +60,7 @@ export default function FloatingParticles() {
           vx: (Math.random() - 0.5) * 0.15,
           vy: (Math.random() - 0.5) * 0.15,
           radius: size,
-          alpha: Math.random() * 0.35 + 0.15,
+          alpha: Math.random() * 0.2 + 0.05,
           color
         });
       }
@@ -97,7 +99,6 @@ export default function FloatingParticles() {
           const dy = p.y - mouseY;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < 150) {
-            // Push particles gently away
             const force = (150 - dist) / 150;
             const angle = Math.atan2(dy, dx);
             p.x += Math.cos(angle) * force * 1.2;
@@ -128,7 +129,7 @@ export default function FloatingParticles() {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 100) {
-            const alpha = (100 - dist) / 100 * 0.05;
+            const alpha = (100 - dist) / 100 * 0.03;
             ctx.strokeStyle = `rgba(139, 92, 246, ${alpha})`;
             ctx.lineWidth = 0.5;
             ctx.beginPath();
@@ -155,7 +156,7 @@ export default function FloatingParticles() {
   return (
     <canvas 
       ref={canvasRef} 
-      className="fixed inset-0 pointer-events-none z-0 block bg-[#050816]" 
+      className="fixed inset-0 pointer-events-none z-0 block bg-white" 
       id="background-ambient-particles-canvas" 
     />
   );
