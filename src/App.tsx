@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Terminal, Sparkles } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CustomCursor from './components/CustomCursor';
@@ -209,6 +210,7 @@ export default function App() {
         )}
 
       </AnimatePresence>
+      <SpeedInsights />
     </div>
   );
 }
