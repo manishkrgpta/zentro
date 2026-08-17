@@ -20,8 +20,6 @@ export default function ContactView({ setActiveView }: ContactViewProps) {
   const [ticketRef, setTicketRef] = useState('');
   const [serverMessage, setServerMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [recentContacts, setRecentContacts] = useState<any[]>([]);
-  const [showRecent, setShowRecent] = useState(false);
 
   useEffect(() => {
     if (submitSuccess && setActiveView) {
@@ -120,25 +118,54 @@ export default function ContactView({ setActiveView }: ContactViewProps) {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, countryCode, phone, company, budgetRange, brief, selectedServices, budget: budgetRange || budget.label }),
+        body: JSON.stringify({
+          name,
+          email,
+          countryCode,
+          phone,
+          company,
+          budgetRange,
+          brief,
+          selectedServices,
+          budget: budgetRange || budget.label,
+        }),
       });
+
       let result: any = null;
       const text = await response.text();
-      try { result = text ? JSON.parse(text) : {}; } catch { result = { message: text || 'Invalid server response.' }; }
+      try {
+        result = text ? JSON.parse(text) : {};
+      } catch {
+        result = { message: text || 'Invalid server response.' };
+      }
+
       setSubmitLogs((p) => [...p, `[HTTP ${response.status}] ${JSON.stringify(result)}`]);
-      if (!response.ok) { const errorText = result?.message || result?.error || text || `Request failed with status ${response.status}`; throw new Error(errorText); }
+
+      if (!response.ok) {
+        const errorText = result?.message || 'We couldn\'t submit your request. Please try again.';
+        throw new Error(errorText);
+      }
+
       const generatedRef = result?.reference || `ZNT-${Math.floor(100000 + Math.random() * 900000)}`;
       setTicketRef(generatedRef);
-      setServerMessage(result?.message || 'Contact request saved successfully.');
-      setSubmitLogs((p) => [...p, '[SUCCESS] Contact request saved.']);
+      setServerMessage(result?.message || 'Your request has been submitted successfully.');
+      setSubmitLogs((p) => [...p, '[SUCCESS] Contact request submitted.']);
       setSubmitSuccess(true);
-      setName(''); setEmail(''); setPhone(''); setCompany(''); setBrief(''); setSelectedServices([]); setBudgetRange('1500-3000');
+      setName('');
+      setEmail('');
+      setPhone('');
+      setCompany('');
+      setBrief('');
+      setSelectedServices([]);
+      setBudgetRange('1500-3000');
     } catch (err: any) {
-      const message = err?.message || 'Unexpected error while submitting the request.';
+      const message = err?.message || 'We couldn\'t submit your request. Please try again.';
       setErrorMessage(message);
       setSubmitLogs((p) => [...p, `[ERROR] ${message}`]);
-      try { console.error('[Contact submit] error:', err); } catch {}
-    } finally { setIsSubmitting(false); }
+      console.error('[Contact submit] error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -197,11 +224,6 @@ export default function ContactView({ setActiveView }: ContactViewProps) {
                 <p className="text-slate-500 text-xs font-sans leading-relaxed max-w-md">{serverMessage || 'Your project specifications have been securely transmitted.'}</p>
                 <div className="mt-4 flex flex-col items-center gap-3 w-full">
                   <button onClick={() => setSubmitSuccess(false)} className="px-5 py-2.5 bg-violet-100 w-full max-w-xs text-xs font-mono text-violet-700 font-semibold rounded-lg">Submit Another Request</button>
-                  <div className="flex gap-2 mt-2">
-                    <button onClick={async () => { try { const res = await fetch('/api/contacts'); const data = await res.json(); setRecentContacts(data.rows || []); setShowRecent(true); } catch (e) { console.error(e); setErrorMessage('Failed to fetch recent contacts.'); } }} className="px-4 py-2 bg-slate-200 text-xs text-slate-700 rounded-lg">View Recent Submissions</button>
-                    <a href="/api/contacts/download" className="px-4 py-2 bg-slate-200 text-xs text-slate-700 rounded-lg" download>Download CSV</a>
-                    <button onClick={async () => { try { setSubmitLogs(p=>[...p,'[ACTION] Resend last entry...']); const r = await fetch('/api/contact/resend', { method: 'POST' }); const j = await r.json(); if (!r.ok) throw new Error(j?.message || 'Resend failed'); setSubmitLogs(p=>[...p,`[RESEND] ${j.message}`]); } catch (e:any) { setSubmitLogs(p=>[...p,`[RESEND-ERROR] ${e.message||e}`]); setErrorMessage('Resend failed: '+(e.message||e)); } }} className="px-4 py-2 bg-amber-200 text-xs text-amber-800 rounded-lg">Resend Last Email</button>
-                  </div>
                   <div className="mt-2 text-xs text-slate-400">You will be redirected to the homepage shortly.</div>
                 </div>
               </div>
@@ -259,23 +281,6 @@ export default function ContactView({ setActiveView }: ContactViewProps) {
                 </div>
                 <button type="submit" className="w-full py-3.5 bg-violet-600 hover:bg-violet-500 rounded-full text-xs font-bold text-white flex items-center justify-center gap-2 mt-2 shadow-[0_4px_10px_rgba(124,58,237,0.2)]"><Send className="w-3.5 h-3.5 text-white" /> Submit Secure Request</button>
               </form>
-            )}
-            {showRecent && (
-              <div className="mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-600">
-                <div className="flex items-center justify-between mb-2"><strong>Recent Submissions</strong><button onClick={() => setShowRecent(false)} className="text-xs text-slate-400">Close</button></div>
-                {recentContacts.length === 0 ? (<div className="text-xs text-slate-400">No submissions found.</div>) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {recentContacts.slice().reverse().map((r, i) => (
-                      <div key={i} className="border-b border-slate-200 pb-2">
-                        <div className="text-xs text-slate-400">{r.timestamp} — <span className="text-slate-800">{r.name}</span></div>
-                        <div className="text-[11px] text-slate-500">{r.email} • {r.countryCode} {r.phone}</div>
-                        <div className="text-[11px] text-slate-400">Budget: {r.budgetRange} • Services: {r.services}</div>
-                        <div className="text-[11px] text-slate-500 mt-1">{r.brief}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             )}
           </div>
         </div>

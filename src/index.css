@@ -223,3 +223,221 @@
     cursor: none !important;
   }
 }
+
+/* Dark Mode Styles */
+#zentro-global-root.dark {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+#zentro-global-root.dark nav {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+/* Text and Typography */
+#zentro-global-root.dark h1,
+#zentro-global-root.dark h2,
+#zentro-global-root.dark h3,
+#zentro-global-root.dark h4,
+#zentro-global-root.dark h5,
+#zentro-global-root.dark h6 {
+  color: #f1f5f9 !important;
+}
+
+#zentro-global-root.dark p,
+#zentro-global-root.dark span,
+#zentro-global-root.dark div {
+  color: #e2e8f0;
+}
+
+#zentro-global-root.dark .text-slate-900 {
+  color: #f1f5f9 !important;
+}
+
+#zentro-global-root.dark .text-slate-800 {
+  color: #e2e8f0 !important;
+}
+
+#zentro-global-root.dark .text-slate-700 {
+  color: #cbd5e1 !important;
+}
+
+#zentro-global-root.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+#zentro-global-root.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+#zentro-global-root.dark .text-slate-400 {
+  color: #64748b !important;
+}
+
+#zentro-global-root.dark .text-slate-300 {
+  color: #475569 !important;
+}
+
+/* Buttons and Interactive */
+#zentro-global-root.dark button {
+  color: #e2e8f0 !important;
+}
+
+#zentro-global-root.dark button:not(.immersive-btn-primary):not(.bg-violet-600) {
+  color: #e2e8f0;
+}
+
+#zentro-global-root.dark a {
+  color: #7c3aed;
+}
+
+#zentro-global-root.dark a:hover {
+  color: #a78bfa;
+}
+
+/* Forms */
+#zentro-global-root.dark input,
+#zentro-global-root.dark textarea,
+#zentro-global-root.dark select {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+#zentro-global-root.dark input::placeholder,
+#zentro-global-root.dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+#zentro-global-root.dark input:focus,
+#zentro-global-root.dark textarea:focus,
+#zentro-global-root.dark select:focus {
+  border-color: #7c3aed;
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+/* Cards and Containers */
+#zentro-global-root.dark .immersive-card {
+  background-color: #1e293b;
+  border-color: rgba(139, 92, 246, 0.15);
+  color: #e2e8f0;
+}
+
+#zentro-global-root.dark .border-slate-200 {
+  border-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+#zentro-global-root.dark .bg-white {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+#zentro-global-root.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+#zentro-global-root.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+#zentro-global-root.dark .bg-violet-50,
+#zentro-global-root.dark .bg-emerald-50,
+#zentro-global-root.dark .bg-red-50 {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+/* Labels and Small Text */
+#zentro-global-root.dark label {
+  color: #cbd5e1 !important;
+}
+
+#zentro-global-root.dark .font-mono {
+  color: #e2e8f0;
+}
+
+#zentro-global-root.dark .uppercase {
+  color: #cbd5e1;
+}
+
+/* Links in navbar */
+#zentro-global-root.dark nav button {
+  color: #cbd5e1 !important;
+}
+
+#zentro-global-root.dark nav button:hover {
+  color: #e2e8f0 !important;
+}
+
+#zentro-global-root.dark .text-violet-600 {
+  color: #a78bfa !important;
+}
+
+#zentro-global-root.dark .text-violet-700 {
+  color: #7c3aed !important;
+}
+
+#zentro-global-root.dark .text-emerald-600 {
+  color: #10b981 !important;
+}
+
+#zentro-global-root.dark .text-red-700 {
+  color: #ef4444 !important;
+}
+
+#zentro-global-root.dark .text-fuchsia-600 {
+  color: #d946ef !important;
+}
+
+/* Hover States */
+#zentro-global-root.dark .hover\:bg-slate-100:hover {
+  background-color: #1e293b !important;
+}
+
+#zentro-global-root.dark .hover\:text-slate-800:hover {
+  color: #e2e8f0 !important;
+}
+
+#zentro-global-root.dark .hover\:text-slate-700:hover {
+  color: #cbd5e1 !important;
+}
+
+/* Scrollbar */
+#zentro-global-root.dark html {
+  scrollbar-color: rgba(139, 92, 246, 0.3) #0f172a;
+}
+
+/* Error and Status Colors */
+#zentro-global-root.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+#zentro-global-root.dark .border-red-200 {
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+#zentro-global-root.dark .text-red-700 {
+  color: #f87171 !important;
+}
+
+#zentro-global-root.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+#zentro-global-root.dark .border-emerald-200 {
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+#zentro-global-root.dark .text-emerald-600 {
+  color: #10b981 !important;
+}
+
+/* Terminal/Code blocks */
+#zentro-global-root.dark .bg-slate-100,
+#zentro-global-root.dark .bg-gray-100 {
+  background-color: #0f172a !important;
+  border-color: rgba(139, 92, 246, 0.1) !important;
+}

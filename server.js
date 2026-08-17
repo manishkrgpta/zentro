@@ -1,7 +1,6 @@
-import express from 'express';
-import fs from 'fs';
-import path from 'path';
+﻿import express from 'express';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -9,259 +8,208 @@ const app = express();
 app.use(express.json());
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_SENDER = 'mrxtechnp@gmail.com';
-const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER || 'manishkrgpta@gmail.com';
-const CSV_PATH = path.resolve(process.cwd(), 'contacts.csv');
+const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER || 'hello@example.com';
+const EMAIL_SENDER = process.env.EMAIL_SENDER || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
 
-const ensureCsvFile = () => {
-  if (!fs.existsSync(CSV_PATH)) {
-    const header = 'timestamp,name,email,countryCode,phone,company,budgetRange,budget,services,brief\n';
-    fs.writeFileSync(CSV_PATH, header, 'utf8');
+const escapeHtml = (value = '') => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/\"/g, '&quot;')
+  .replace(/'/g, '&#039;')
+  .replace(/\r?\n/g, '<br />');
+
+const normalizePhone = (value = '') => String(value).replace(/\D/g, '').slice(0, 12);
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
+const generateReference = () => `ZNT-${Math.floor(100000 + Math.random() * 900000)}`;
+
+const asyncJsonBody = async (req) => {
+  if (req.body && typeof req.body === 'object') return req.body;
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  const text = Buffer.concat(chunks).toString('utf8').trim();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    const malformed = new Error('Malformed JSON request body.');
+    malformed.statusCode = 400;
+    throw malformed;
   }
 };
 
-ensureCsvFile();
-
-const escapeCsv = (value = '') => {
-  const str = String(value).replace(/"/g, '""').replace(/\r?\n/g, ' ');
-  return `"${str}"`;
-};
-
-const appendContactCsv = async (row) => {
-  const line = [
-    escapeCsv(row.timestamp),
-    escapeCsv(row.name),
-    escapeCsv(row.email),
-    escapeCsv(row.countryCode),
-    escapeCsv(row.phone),
-    escapeCsv(row.company),
-    escapeCsv(row.budgetRange),
-    escapeCsv(row.budget),
-    escapeCsv(row.services),
-    escapeCsv(row.brief)
-  ].join(',') + '\n';
-
-  await fs.promises.appendFile(CSV_PATH, line, 'utf8');
-};
-
-app.post('/api/contact', async (req, res) => {
-  const { name, email, countryCode, phone, company, budgetRange, brief, selectedServices, budget } = req.body;
-
-  if (!name || !email || !brief || !budgetRange) {
-    return res.status(400).json({ message: 'Name, email, budget range, and project objectives are required.' });
+const sendEmailWithSmtp = async ({ subject, text, html, replyTo }) => {
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+    throw new Error('SMTP email configuration is missing.');
   }
 
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(String(email))) {
-    return res.status(400).json({ message: 'A valid email address is required.' });
-  }
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
 
-  // Phone must be digits only and no more than 12 digits if provided
-  if (phone) {
-    const digits = String(phone).replace(/\D/g, '');
-    if (!/^\d+$/.test(digits)) {
-      return res.status(400).json({ message: 'Phone number must contain digits only.' });
+  await transporter.sendMail({
+    from: EMAIL_SENDER,
+    to: EMAIL_RECEIVER,
+    replyTo: replyTo && isValidEmail(replyTo) ? replyTo : undefined,
+    subject,
+    text,
+    html,
+  });
+
+  return 'sent';
+};
+
+const postEmail = async ({ subject, text, html, replyTo }) => {
+  if (RESEND_API_KEY) {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: EMAIL_SENDER,
+        to: [EMAIL_RECEIVER],
+        subject,
+        text,
+        html,
+        reply_to: replyTo && isValidEmail(replyTo) ? replyTo : undefined,
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Resend API failed: ${response.status} ${body}`);
     }
-    if (digits.length > 12) {
-      return res.status(400).json({ message: 'Phone number can contain at most 12 digits.' });
-    }
+
+    return 'sent';
   }
 
-  const reference = `ZNT-${Math.floor(100000 + Math.random() * 900000)}`;
-  const subject = `New contact request from ${name}`;
-  const serviceList = Array.isArray(selectedServices) && selectedServices.length > 0
-    ? `<li>${selectedServices.join('</li><li>')}</li>`
-    : '<li>No services selected</li>';
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    return sendEmailWithSmtp({ subject, text, html, replyTo });
+  }
 
+  throw new Error('Email provider is not configured.');
+};
+
+const validateRequest = (payload) => {
+  const { name, email, brief, budgetRange, phone } = payload || {};
+  if (!name || !String(name).trim()) return 'Name is required.';
+  if (!email || !String(email).trim()) return 'Email is required.';
+  if (!isValidEmail(String(email))) return 'A valid email address is required.';
+  if (!budgetRange || !String(budgetRange).trim()) return 'Budget range is required.';
+  if (!brief || !String(brief).trim()) return 'Project objectives are required.';
+  if (phone !== undefined && phone !== null && String(phone).trim() !== '') {
+    const digits = normalizePhone(phone);
+    if (!/^\d+$/.test(digits) || digits.length > 12) return 'Phone number must contain up to 12 digits.';
+  }
+  return null;
+};
+
+const buildEmailPayload = (payload) => {
+  const cleanName = String(payload.name || 'N/A');
+  const cleanEmail = String(payload.email || 'N/A');
+  const cleanPhone = `${payload.countryCode || ''} ${payload.phone || 'N/A'}`.trim();
+  const cleanCompany = String(payload.company || 'N/A');
+  const cleanBudgetRange = String(payload.budgetRange || 'N/A');
+  const cleanBudget = String(payload.budget || payload.estimatedBudget || 'N/A');
+  const cleanServices = Array.isArray(payload.selectedServices) && payload.selectedServices.length > 0 ? payload.selectedServices.join(', ') : 'No services selected';
+  const cleanBrief = String(payload.brief || 'N/A');
+
+  const subject = `New Zentro project inquiry from ${cleanName}`;
   const html = `
     <h2>New Contact Request</h2>
-    <p><strong>Reference:</strong> ${reference}</p>
-    <p><strong>Name:</strong> ${name}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Phone:</strong> ${countryCode || ''} ${phone || 'N/A'}</p>
-    <p><strong>Company / Product:</strong> ${company || 'N/A'}</p>
-    <p><strong>Budget Range:</strong> ${budgetRange || 'N/A'}</p>
-    <p><strong>Estimated Budget:</strong> ${budget || 'N/A'}</p>
-    <p><strong>Services Requested:</strong></p>
-    <ul>${serviceList}</ul>
+    <p><strong>Reference:</strong> ${escapeHtml(payload.reference || 'N/A')}</p>
+    <p><strong>Name:</strong> ${escapeHtml(cleanName)}</p>
+    <p><strong>Email:</strong> ${escapeHtml(cleanEmail)}</p>
+    <p><strong>Phone:</strong> ${escapeHtml(cleanPhone)}</p>
+    <p><strong>Company / Product:</strong> ${escapeHtml(cleanCompany)}</p>
+    <p><strong>Budget Range:</strong> ${escapeHtml(cleanBudgetRange)}</p>
+    <p><strong>Estimated Budget:</strong> ${escapeHtml(cleanBudget)}</p>
+    <p><strong>Selected Services:</strong> ${escapeHtml(cleanServices)}</p>
     <p><strong>System Objectives:</strong></p>
-    <p>${String(brief).replace(/\n/g, '<br/>')}</p>
+    <p>${escapeHtml(cleanBrief)}</p>
   `;
 
   const text = [
-    `New contact request from ${name}`,
-    `Reference: ${reference}`,
-    `Name: ${name}`,
-    `Email: ${email}`,
-    `Phone: ${countryCode || ''} ${phone || 'N/A'}`,
-    `Company / Product: ${company || 'N/A'}`,
-    `Budget Range: ${budgetRange || 'N/A'}`,
-    `Estimated Budget: ${budget || 'N/A'}`,
-    `Services: ${Array.isArray(selectedServices) ? selectedServices.join('; ') : ''}`,
-    `Objectives: ${brief}`
+    `New Zentro project inquiry from ${cleanName}`,
+    `Reference: ${payload.reference || 'N/A'}`,
+    `Name: ${cleanName}`,
+    `Email: ${cleanEmail}`,
+    `Phone: ${cleanPhone}`,
+    `Company / Product: ${cleanCompany}`,
+    `Budget Range: ${cleanBudgetRange}`,
+    `Estimated Budget: ${cleanBudget}`,
+    `Selected Services: ${cleanServices}`,
+    `System Objectives: ${cleanBrief}`,
   ].join('\n');
 
+  return { subject, html, text };
+};
+
+app.post('/api/contact', async (req, res) => {
   try {
-    await appendContactCsv({
-      timestamp: new Date().toISOString(),
-      name,
-      email,
-      countryCode,
-      phone,
-      company,
-      budgetRange,
-      budget,
-      services: Array.isArray(selectedServices) ? selectedServices.join('; ') : '',
-      brief
-    });
-
-    let emailStatus = 'skipped';
-
-    if (RESEND_API_KEY) {
-      emailStatus = 'sending';
-      try {
-        const resendRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: EMAIL_SENDER,
-            to: [EMAIL_RECEIVER],
-            subject,
-            text,
-            html,
-            reply_to: email || EMAIL_SENDER,
-          })
-        });
-
-        if (!resendRes.ok) {
-          const responseText = await resendRes.text();
-          throw new Error(`Resend API failed: ${resendRes.status} ${responseText}`);
-        }
-      } catch (sendErr) {
-        console.error('Resend send error:', sendErr);
-        emailStatus = 'failed';
-      }
-    } else {
-      console.warn('Resend API key not configured - skipping email send. Provide RESEND_API_KEY to enable email delivery.');
+    const payload = await asyncJsonBody(req);
+    const validationError = validateRequest(payload);
+    if (validationError) {
+      return res.status(400).json({ success: false, message: validationError });
     }
 
-    const successMessage = emailStatus === 'failed'
-      ? 'Contact request saved, but email delivery failed.'
-      : 'Contact request saved successfully.';
+    const reference = generateReference();
+    const submission = {
+      ...payload,
+      reference,
+      phone: normalizePhone(payload.phone),
+      email: String(payload.email).trim(),
+      name: String(payload.name).trim(),
+      company: String(payload.company || '').trim(),
+      brief: String(payload.brief).trim(),
+      budget: payload.budget ?? payload.estimatedBudget ?? payload.budgetRange,
+    };
 
-    return res.json({ message: successMessage, reference, emailStatus });
+    const { subject, html, text } = buildEmailPayload(submission);
+    await postEmail({ subject, html, text, replyTo: submission.email });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Contact request submitted successfully.',
+      reference,
+    });
   } catch (error) {
-    console.error('Error handling contact request:', error);
-    const message = error && error.message ? String(error.message) : 'Unable to process contact request.';
-    return res.status(500).json({ message });
+    console.error('Contact API error:', error);
+    const statusCode = error && error.statusCode === 400 ? 400 : 500;
+    const message = statusCode === 400 ? (error.message || 'Invalid request.') : 'Unable to process contact request.';
+    return res.status(statusCode).json({ success: false, message });
   }
 });
 
-// Return parsed contacts as JSON (useful for debugging submissions)
-app.get('/api/contacts', async (req, res) => {
-  try {
-    const raw = await fs.promises.readFile(CSV_PATH, 'utf8');
-    const lines = raw.split(/\r?\n/).filter((l) => l.trim() !== '');
-    if (lines.length <= 1) return res.json({ count: 0, rows: [] });
+const PORT = Number(process.env.PORT || process.env.API_PORT || 5001);
 
-    const dataLines = lines.slice(1); // skip header
-    const rows = dataLines.map((line) => {
-      const matches = line.match(/"((?:[^"]|"")*)"/g) || [];
-      const fields = matches.map((m) => m.slice(1, -1).replace(/""/g, '"'));
-      return {
-        timestamp: fields[0] || null,
-        name: fields[1] || null,
-        email: fields[2] || null,
-        countryCode: fields[3] || null,
-        phone: fields[4] || null,
-        company: fields[5] || null,
-        budgetRange: fields[6] || null,
-        budget: fields[7] || null,
-        services: fields[8] || null,
-        brief: fields[9] || null,
-      };
-    });
-
-    return res.json({ count: rows.length, rows });
-  } catch (error) {
-    console.error('Error reading contacts.csv:', error);
-    return res.status(500).json({ message: String(error) });
-  }
-});
-
-// Download contacts.csv
-app.get('/api/contacts/download', (req, res) => {
-  res.download(CSV_PATH, 'contacts.csv', (err) => {
-    if (err) {
-      console.error('Error sending contacts.csv:', err);
+const startServer = (port) => {
+  app.listen(port, () => {
+    console.log(`Express API listening on port ${port}`);
+  }).on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      const nextPort = port + 1;
+      console.warn(`Port ${port} is busy, retrying on ${nextPort}`);
+      startServer(nextPort);
+      return;
     }
+
+    throw error;
   });
-});
+};
 
-// Resend the last contact row by email
-app.post('/api/contact/resend', async (req, res) => {
-  try {
-    const raw = await fs.promises.readFile(CSV_PATH, 'utf8');
-    const lines = raw.split(/\r?\n/).filter((l) => l.trim() !== '');
-    if (lines.length <= 1) return res.status(400).json({ message: 'No contacts to resend.' });
-
-    const last = lines[lines.length - 1];
-    const matches = last.match(/"((?:[^"]|"")*)"/g) || [];
-    const fields = matches.map((m) => m.slice(1, -1).replace(/""/g, '"'));
-
-    const [timestamp, name, email, countryCode, phone, company, budgetRange, budget, services, brief] = fields;
-    const reference = `ZNT-RESEND-${Math.floor(100000 + Math.random() * 900000)}`;
-    const subject = `Resend: Contact request from ${name}`;
-    const html = `
-      <h2>Resent Contact Request</h2>
-      <p><strong>Reference:</strong> ${reference}</p>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${countryCode || ''} ${phone || 'N/A'}</p>
-      <p><strong>Company / Product:</strong> ${company || 'N/A'}</p>
-      <p><strong>Budget Range:</strong> ${budgetRange || 'N/A'}</p>
-      <p><strong>Estimated Budget:</strong> ${budget || 'N/A'}</p>
-      <p><strong>Services Requested:</strong></p>
-      <p>${services}</p>
-      <p><strong>System Objectives:</strong></p>
-      <p>${(brief || '').replace(/\n/g, '<br/>')}</p>
-    `;
-    const text = `Resent contact request from ${name}\n\nReference: ${reference}\nName: ${name}\nEmail: ${email}\nPhone: ${countryCode || ''} ${phone || 'N/A'}\nCompany: ${company || 'N/A'}\nBudget Range: ${budgetRange || 'N/A'}\nEstimated Budget: ${budget || 'N/A'}\nServices: ${services}\nObjectives: ${brief}`;
-
-    if (RESEND_API_KEY) {
-      const resendRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: EMAIL_SENDER,
-          to: [EMAIL_RECEIVER],
-          subject,
-          text,
-          html,
-          reply_to: email || EMAIL_SENDER,
-        })
-      });
-
-      const resendText = await resendRes.text();
-      console.log('Resend resend status:', resendRes.status, resendText);
-      if (!resendRes.ok) throw new Error(`Resend resend failed: ${resendRes.status}`);
-    } else {
-      console.warn('Resend API key not configured - skipping resend.');
-      return res.status(400).json({ message: 'Email not configured on server. Provide RESEND_API_KEY.' });
-    }
-
-    return res.json({ message: 'Resend attempted.', reference });
-  } catch (error) {
-    console.error('Error resending contact email:', error);
-    return res.status(500).json({ message: String(error) });
-  }
-});
-
-const port = Number(process.env.API_PORT || 5000);
-app.listen(port, () => {
-  console.log(`Contact API server running on http://localhost:${port}`);
-});
+startServer(PORT);

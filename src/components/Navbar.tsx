@@ -79,7 +79,16 @@ export default function Navbar({ activeView, setActiveView, toggleDarkMode, dark
             })}
           </div>
 
-          <div className="hidden md:block" id="navbar-cta-container">
+          <div className="hidden md:flex items-center gap-3" id="navbar-cta-container">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-all duration-300 focus:outline-none"
+              id="navbar-theme-toggle"
+              aria-label="Toggle dark mode"
+              title={darkMode ? 'Light mode' : 'Dark mode'}
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <button
               onClick={() => handleNavClick('contact')}
               className="px-5 py-2.5 rounded-full text-xs font-sans font-bold uppercase tracking-wider text-white bg-violet-600 hover:bg-violet-500 transition-all duration-300 shadow-[0_4px_10px_rgba(124,58,237,0.2)] active:scale-95 flex items-center gap-2 cursor-pointer"
@@ -90,7 +99,16 @@ export default function Navbar({ activeView, setActiveView, toggleDarkMode, dark
             </button>
           </div>
 
-          <div className="flex md:hidden" id="navbar-mobile-toggle-container">
+          <div className="flex md:hidden items-center gap-2" id="navbar-mobile-toggle-container">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-all duration-300 focus:outline-none"
+              id="navbar-mobile-theme-toggle"
+              aria-label="Toggle dark mode"
+              title={darkMode ? 'Light mode' : 'Dark mode'}
+            >
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 focus:outline-none"
